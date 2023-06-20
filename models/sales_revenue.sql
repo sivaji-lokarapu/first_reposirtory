@@ -1,4 +1,4 @@
-
+//*
 {{ config(materialized='table') }}
 
 WITH sales_data AS (

@@ -1,11 +1,11 @@
 
-{{ config(materialized='table',schema='schema1') }}
+{{ config(materialized='table',schema='schema1',alias='customers') }}
 
-with customer as (SELECT
+with customers as (SELECT
   C_CUSTOMER_SK,
   C_FIRST_NAME,
   C_BIRTH_COUNTRY
 FROM
   SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CUSTOMER)
 
-  select * from customer
+  select * from customers
