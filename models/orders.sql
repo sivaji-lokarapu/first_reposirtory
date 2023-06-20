@@ -16,3 +16,4 @@ WITH store_sales AS (
 
 SELECT *
 FROM store_sales;
+
