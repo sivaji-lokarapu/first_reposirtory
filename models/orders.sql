@@ -1,5 +1,5 @@
 
-{{ config(materialized='table') }}
+{{ config(materialized='table', schema='schema1',alias='orders') }}
 
 WITH store_sales AS (
   SELECT
@@ -10,10 +10,10 @@ WITH store_sales AS (
     SS_QUANTITY,
     SS_STORE_SK
   FROM
-    SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.STORE_SALES
-  LIMIT 10000 -- Limiting to 10,000 rows
+    raw.schema1.orders
+  LIMIT 10000 
 )
 
 SELECT *
-FROM store_sales;
+FROM store_sales
 
