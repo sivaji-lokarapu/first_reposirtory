@@ -15,3 +15,4 @@ WITH sales_data AS (
 
 SELECT *
 FROM sales_data
+
