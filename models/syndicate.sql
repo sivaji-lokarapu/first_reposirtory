@@ -1,10 +1,13 @@
 
 
-{% macro syndicated_model() %}
-  {{ rawhist_model() }}
-  
-  CREATE OR REPLACE TABLE syndicated_table AS (
-    SELECT DISTINCT *
-    FROM rawhist_table
-  );
-{% endmacro %}
+{{ config(materialized='table') }}
+
+WITH deduplicated_data AS (
+  SELECT DISTINCT *
+  FROM {{ ref('rawhist') }}
+)
+
+SELECT *
+FROM deduplicated_data;
+
+

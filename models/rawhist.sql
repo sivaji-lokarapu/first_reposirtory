@@ -1,34 +1,32 @@
+{{config(materialized='table',schema='schema1',alias='rawhist_data') }}
 
-{% macro rawhist_model() %}
-  {{ copy_to_landing_table() }}
-  
-  WITH flattened_data AS (
-    SELECT
-      AS_of_date,
-      Calendar_Period,
-      account_type,
-      account_type_desc,
-      author,
-      canada_price,
-      first_bill_date,
-      foo,
-      isbn,
-      isbn13,
-      order_type,
-      order_type_desc,
-      sales_dollars,
-      sales_type,
-      sales_type_desc,
-      sales_units,
-      title,
-      usa_price
-    FROM landing_table
-  )
-  
-  CREATE OR REPLACE TABLE rawhist_table AS (
-    SELECT
-      *,
-      CURRENT_TIMESTAMP() AS load_date
-    FROM flattened_data
-  );
-{% endmacro %}
+{{copy_to_landing_table('landing_table') }}
+
+WITH RAWHIST_DATA  AS (
+  SELECT
+    *
+  FROM
+   dbt_assignement.public.landing_table
+)
+SELECT
+RAW:As_of_date::timestamp as As_of_date,
+RAW:Calendar_Period::varchar(50) as Calendar_Period,
+RAW:account_type::varchar(50) as account_type,
+RAW:account_type_desc::varchar(50) as account_type_desc,
+RAW:author::varchar(50) as author,
+RAW:canada_price::varchar(50) as canada_price,
+RAW:first_bill_date::varchar(50) as first_bill_date,
+RAW:foo::varchar(50) as foo,
+RAW:isbn::varchar(50) as isbn,
+RAW:isbn_13::varchar(50) as isbn_13,
+RAW:order_type::varchar(50) as order_type,
+RAW:order_type_desc::varchar(50) as order_type_desc,
+RAW:sales_dollars::varchar(50) as sales_dollars,
+RAW:sales_type::varchar(50) as sales_type,
+RAW:sales_type_desc::varchar(50) as sales_type_desc,
+RAW:sales_units::varchar(50) as sales_units,
+RAW:title::varchar(50) as title,
+RAW:usa_price::varchar(50) as usa_price
+ from rawhist_data
+limit 500
+
