@@ -1,4 +1,4 @@
-{% macro copy_to_landing_table(table) %}
+{% macro copy_to_landing(table) %}
 
   COPY INTO dbt_assignement.public.{{table}} from
   (select 
