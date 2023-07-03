@@ -1,28 +1,29 @@
-{{
-    config(
-        materialized='incremental',
-        unique_key='EMPLOYEEID'
-        ) }}
-with scd1rawhist as(
-    select 
-    EMPLOYEEID,
-    FIRSTNAME,
-    LASTNAME,
-    EMAIL,
-    HIREDATE,
-    UPDATEDATE
-    FROM(
-        select 
+{{ config(materialized='incremental', unique_key='EMPLOYEEID') }}
+
+WITH scd1 AS (
+  SELECT 
     EMPLOYEEID,
     FIRSTNAME,
     LASTNAME,
     EMAIL,
     HIREDATE,
     UPDATEDATE,
-    ROW_NUMBER() OVER (PARTITION BY EMPLOYEEID ORDER BY UPDATEDATE DESC) as row_num
-    FROM {{ ref('falttened') }}
+    startdate,
+    enddate
+  FROM (
+    SELECT 
+      EMPLOYEEID,
+      FIRSTNAME,
+      LASTNAME,
+      EMAIL,
+      HIREDATE,
+      startdate,
+      enddate,
+      UPDATEDATE,
+      ROW_NUMBER() OVER (PARTITION BY EMPLOYEEID ORDER BY UPDATEDATE DESC) AS row_num
+    FROM {{ ref('flattened') }}
   )
   WHERE row_num = 1
-    )
-select * from scd1rawhist
+)
 
+SELECT * FROM scd1

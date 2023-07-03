@@ -1,62 +1,74 @@
-{{
-  config(
-    materialized='incremental',
-    unique_key='EMPLOYEEID'
+
+{{ config(
+  materialized='table',
+  target_database='dbt_assignment',
+  target_schema='public',
+  unique_key='employeeid',
+  strategy='merge',
+  merge_cols=['employeeid']
+) }}
+
+
+WITH historical_records AS (
+  SELECT
+    employeeid,
+    firstname,
+    lastname,
+    email,
+    hiredate,
+    startdate,
+    enddate,
+    version
+  FROM {{ ref('scd1') }}
+),
+
+
+latest_records AS (
+  SELECT
+    a.employeeid,
+    a.firstname,
+    a.lastname,
+    a.email,
+    a.hiredate,
+    b.startdate,
+    CURRENT_TIMESTAMP() AS enddate,
+    b.version + 1 AS version
+  FROM {{ ref('flattened') }} a
+  LEFT JOIN (
+    SELECT employeeid, MAX(startdate) AS startdate, MAX(version) AS version
+    FROM {{ ref('scd2') }}
+    GROUP BY employeeid
+  ) b ON a.employeeid = b.employeeid
+)
+
+
+MERGE INTO {{ ref('scd1') }} AS target
+USING latest_records AS source
+ON target.employeeid = source.employeeid
+WHEN MATCHED THEN
+  UPDATE SET
+    target.enddate = source.enddate,
+    target.version = source.version
+WHEN NOT MATCHED THEN
+  INSERT (
+    employeeid,
+    firstname,
+    lastname,
+    email,
+    hiredate,
+    startdate,
+    enddate,
+    version
   )
-}}
-
--- Insert new records
-WITH new_records AS (
-  SELECT
-    EMPLOYEEID,
-    FIRSTNAME,
-    LASTNAME,
-    EMAIL,
-    HIREDATE,
-    UPDATEDATE,
-    ROW_NUMBER() OVER (PARTITION BY EMPLOYEEID ORDER BY UPDATEDATE DESC) AS row_num
-  FROM {{ ref('flattened') }}
-)
-
-INSERT INTO scd2rawhist (
-  EMPLOYEEID,
-  FIRSTNAME,
-  LASTNAME,
-  EMAIL,
-  HIREDATE,
-  UPDATEDATE,
-  CURRENT_FLAG
-)
-SELECT
-  EMPLOYEEID,
-  FIRSTNAME,
-  LASTNAME,
-  EMAIL,
-  HIREDATE,
-  UPDATEDATE,
-  CASE WHEN row_num = 1 THEN 1 ELSE 0 END AS CURRENT_FLAG
-FROM new_records
-WHERE row_num = 1;
-
--- Update existing records
-WITH latest_records AS (
-  SELECT
-    EMPLOYEEID,
-    FIRSTNAME,
-    LASTNAME,
-    EMAIL,
-    HIREDATE,
-    UPDATEDATE,
-    ROW_NUMBER() OVER (PARTITION BY EMPLOYEEID ORDER BY UPDATEDATE DESC) AS row_num
-  FROM scd2rawhist
-)
-
-UPDATE scd2rawhist
-SET CURRENT_FLAG = 0
-WHERE EMPLOYEEID IN (
-  SELECT EMPLOYEEID
-  FROM latest_records
-  WHERE row_num > 1
-);
+  VALUES (
+    source.employeeid,
+    source.firstname,
+    source.lastname,
+    source.email,
+    source.hiredate,
+    source.startdate,
+    source.enddate,
+    source.version
+  );
 
 
